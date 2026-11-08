@@ -8,8 +8,11 @@
     import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
     import * as Table from '#lib/components/ui/table/index.ts';
     import {UserRoundPlusIcon, EllipsisIcon, PencilIcon, TrashIcon} from '@lucide/svelte/icons';    
+    import { Spinner } from '#lib/components/ui/spinner/index.js';
 
     const {data} = $props();
+
+    let loadingType = $state<"submit" | "delete" | null>(null);
 
     type Usuario = NonNullable<typeof data.users>[number];
     const usuarios = $derived(data.users ?? []);
@@ -19,6 +22,7 @@
     ];
 
     let isDialogUsuarioAbierto = $state(false);
+    let isDialogDelUsuarioAbierto = $state(false);
     let iSeleccionado = $state<number | null>(null);
     let formulario = $state({
         cedula: '',
@@ -27,14 +31,14 @@
         tipo: "C"
     });
 
-    function abrirRegistro() {
+    const abrirRegistro = () => {
         iSeleccionado = null;
         formulario = { cedula: '', nombres: '', apellidos: '', tipo: "C" };
         isDialogUsuarioAbierto = true;
     }
 
-    function abrirEdicion(usuario: Usuario) {
-        iSeleccionado = usuario.id;
+    const abrirEdicion = (usuario: Usuario, i:number) => {
+        iSeleccionado = i;
         formulario = {
             cedula: usuario.cedula,
             nombres: usuario.nombres,
@@ -42,6 +46,10 @@
             tipo: usuario.tipo
         };
         isDialogUsuarioAbierto = true;
+    }
+    const abrirEliminacion = (i:number) => {
+        iSeleccionado = i;        
+        isDialogDelUsuarioAbierto = true;
     }
 
 </script>
@@ -52,6 +60,7 @@
     <h1 class="text-2xl font-bold mb-4">Visualizar Usuarios Registrados</h1>
     
     {@render DialogUsuario()}
+    {@render DialogDeleteUsuario()}
 
     <div>
         <Table.Root>
@@ -64,7 +73,7 @@
                 </Table.Row>
             </Table.Header>
             <Table.Body>
-            {#each usuarios as user (user.id)}
+            {#each usuarios as user, index (user.id)}
                 <Table.Row>
                 <Table.Cell class="font-medium">{user.cedula}</Table.Cell>
                 <Table.Cell>{user.nombres} {user.apellidos}</Table.Cell>
@@ -80,8 +89,8 @@
 							{/snippet}
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end">
-							<DropdownMenu.Item onclick={() => abrirEdicion(user)}> <PencilIcon class="size-4" /> Editar</DropdownMenu.Item>
-							<DropdownMenu.Item variant="destructive"> <TrashIcon class="size-4" /> Eliminar</DropdownMenu.Item>
+							<DropdownMenu.Item onclick={() => abrirEdicion(user, index)}> <PencilIcon class="size-4" /> Editar</DropdownMenu.Item>
+							<DropdownMenu.Item variant="destructive" onclick={() => abrirEliminacion(index)}> <TrashIcon class="size-4" /> Eliminar</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
 				</Table.Cell>
@@ -98,11 +107,19 @@
         <UserRoundPlusIcon class="size-4"/> Registrar Usuario
     </Button>
     <Dialog.Root bind:open={isDialogUsuarioAbierto}>
+    
             <Dialog.Content class="sm:max-w-sm">
-                <form onsubmit={(event) => event.preventDefault()}>
                 <Dialog.Header>
                     <Dialog.Title>{iSeleccionado === null ? "Registrar Usuario" : "Editar Usuario"}</Dialog.Title>
                 </Dialog.Header>
+                {#if loadingType === "submit"}
+                    <div class="flex flex-col items-center justify-center gap-4">
+                        <Spinner class="size-8" />
+                        <p class="text-sm text-muted-foreground">Procesando...</p>
+                    </div>
+                {:else}
+                <form onsubmit={(event) => event.preventDefault()}>
+                
                 <Field.Group class="mt-4">
                     <Field.Field>
                         <Label for="cedula">Cédula</Label>
@@ -138,6 +155,33 @@
                     <Button type="submit">{iSeleccionado === null ? "Registrar" : "Guardar cambios"}</Button>
                 </Dialog.Footer>
                 </form>
+                {/if}
+            </Dialog.Content>
+    </Dialog.Root>
+{/snippet}
+{#snippet DialogDeleteUsuario()}    
+    <Dialog.Root bind:open={isDialogDelUsuarioAbierto}>
+    
+            <Dialog.Content class="sm:max-w-sm">
+                <Dialog.Header>
+                    <Dialog.Title>Eliminar Usuario</Dialog.Title>
+                </Dialog.Header>
+                {#if loadingType === "delete"}
+                    <div class="flex flex-col items-center justify-center gap-4">
+                        <Spinner class="size-8" />
+                        <p class="text-sm text-muted-foreground">Eliminando...</p>
+                    </div>
+                {:else}
+                <div>
+                    Esta seguro de querer eliminar el usuario de {usuarios[iSeleccionado!]?.nombres} {usuarios[iSeleccionado!]?.apellidos} con cédula {usuarios[iSeleccionado!]?.cedula}? Esta acción no se puede deshacer.
+                </div>
+                <Dialog.Footer class="mt-4">
+                    <Dialog.Close type="button" class={buttonVariants({ variant: "outline" })}>
+                        Cancelar
+                    </Dialog.Close>
+                    <Button type="button" variant="destructive">Eliminar</Button>
+                </Dialog.Footer>
+                {/if}
             </Dialog.Content>
     </Dialog.Root>
 {/snippet}
