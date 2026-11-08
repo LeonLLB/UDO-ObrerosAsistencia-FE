@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({cookies,url}) => {
         maxAge: 20 * 60
     });
 
-    const personal = await (await getDataSource()).getRepository(EntidadPersonal).find({
+  const personal = await (await getDataSource()).getRepository(EntidadPersonal).find({
         select: { id:true,apellidos: true, nombres: true, cedula: true, status: true,tipo:true, fechaIngreso:true, areaEncargada: { id:true, nombre:true } },
         relations:{areaEncargada:true}
     }).then((personal) => personal.map(trabajador=>({...trabajador,areaEncargada:{...trabajador.areaEncargada}})));
