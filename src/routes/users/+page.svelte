@@ -7,15 +7,19 @@
 	import { Label } from "#lib/components/ui/label/index.js";
     import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
     import * as Table from '#lib/components/ui/table/index.ts';
-    import {UserRoundPlusIcon, EllipsisIcon, PencilIcon, TrashIcon} from '@lucide/svelte/icons';    
+    import {UserRoundPlusIcon, EllipsisIcon, PencilIcon, TrashIcon, RotateCcwIcon} from '@lucide/svelte/icons';    
     import { Spinner } from '#lib/components/ui/spinner/index.js';
+    import { toast } from 'svelte-sonner';
+    import { getApiErrorMessage } from '#lib/helpers/client/getApiErrorMessage.ts';
+    import { axiosA } from '#lib/adapters/Axios.adapter.js';
+    import { Separator } from '#lib/components/ui/separator/index.js';
 
     const {data} = $props();
 
-    let loadingType = $state<"submit" | "delete" | null>(null);
+    let loadingType = $state<"submit" | "delete" | "reset" | null>(null);
 
     type Usuario = NonNullable<typeof data.users>[number];
-    const usuarios = $derived(data.users ?? []);
+    let usuarios = $state(data.users ?? []);
     const tiposUsuario = [
         { value: 'A', label: 'Administrador' },
         { value: 'C', label: 'Usuario' }
@@ -23,6 +27,7 @@
 
     let isDialogUsuarioAbierto = $state(false);
     let isDialogDelUsuarioAbierto = $state(false);
+    let isDialogResetUsuarioAbierto = $state(false);
     let iSeleccionado = $state<number | null>(null);
     let formulario = $state({
         cedula: '',
@@ -47,9 +52,89 @@
         };
         isDialogUsuarioAbierto = true;
     }
-    const abrirEliminacion = (i:number) => {
+    const abrirEliminacionOReseteo = (i:number,isReset = false) => {
         iSeleccionado = i;        
-        isDialogDelUsuarioAbierto = true;
+        if(isReset){
+            isDialogResetUsuarioAbierto = true;
+        } else {
+            isDialogDelUsuarioAbierto = true;
+        }
+    }
+
+    const registrarUsuario = async () => {
+        loadingType = "submit";
+        try {
+            if(iSeleccionado === null){
+                
+                const res = await axiosA.post('/users', formulario);
+
+                if(res.status === 201){
+                    toast.success('Usuario registrado con éxito');
+                    usuarios = [...data.users ?? [], {...res.data,status:0}];
+                } else {
+                    toast.error('Error al registrar el usuario');
+                }
+
+            } else {
+                const res = await axiosA.put(`/users/${usuarios[iSeleccionado].id}`, formulario);
+
+                if(res.status === 200){
+                    toast.success('Usuario modificado con éxito');
+                    usuarios[iSeleccionado] = {
+                        ...usuarios[iSeleccionado],
+                        ...res.data
+                    };
+                } else {
+                    toast.error('Error al modificar el usuario');
+                }
+            }
+        } catch (error) {
+            toast.error(getApiErrorMessage(error))
+        } finally {
+            loadingType = null;
+            isDialogUsuarioAbierto = false;
+        }
+    }
+
+    const eliminarUsuario = async () => {
+        loadingType = "delete";
+        try {
+            const res = await axiosA.delete(`/users/${usuarios[iSeleccionado!].id}`);
+
+            if(res.status === 204){
+                toast.success('Usuario eliminado con éxito');
+                usuarios = usuarios.filter((_,i) => i !== iSeleccionado);
+            } else {
+                toast.error('Error al eliminar el usuario');
+            }
+        } catch (error) {
+            toast.error(getApiErrorMessage(error))
+        } finally {
+            loadingType = null;
+            isDialogDelUsuarioAbierto = false;
+        }
+    }
+
+    const reiniciarClave = async () => {
+        loadingType = "reset";
+        try {
+            const res = await axiosA.put(`/users/${usuarios[iSeleccionado!].id}/clave`);
+
+            if(res.status === 200){
+                toast.success('Clave reiniciada con éxito');
+                 usuarios[iSeleccionado!] = {
+                        ...usuarios[iSeleccionado!],
+                        status:0
+                    }
+            } else {
+                toast.error('Error al reiniciar la clave');
+            }
+        } catch (error) {
+            toast.error(getApiErrorMessage(error))
+        } finally {
+            loadingType = null;
+            isDialogResetUsuarioAbierto = false;
+        }
     }
 
 </script>
@@ -61,6 +146,7 @@
     
     {@render DialogUsuario()}
     {@render DialogDeleteUsuario()}
+    {@render DialogResetUsuario()}
 
     <div>
         <Table.Root>
@@ -90,7 +176,9 @@
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end">
 							<DropdownMenu.Item onclick={() => abrirEdicion(user, index)}> <PencilIcon class="size-4" /> Editar</DropdownMenu.Item>
-							<DropdownMenu.Item variant="destructive" onclick={() => abrirEliminacion(index)}> <TrashIcon class="size-4" /> Eliminar</DropdownMenu.Item>
+							<DropdownMenu.Item disabled={user.status === 0} onclick={() => abrirEliminacionOReseteo(index,true)}> <RotateCcwIcon class="size-4" /> Reiniciar Clave</DropdownMenu.Item>
+                            <DropdownMenu.Separator/>
+							<DropdownMenu.Item variant="destructive" onclick={() => abrirEliminacionOReseteo(index)}> <TrashIcon class="size-4" /> Eliminar</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
 				</Table.Cell>
@@ -152,7 +240,9 @@
                     <Dialog.Close type="button" class={buttonVariants({ variant: "outline" })}>
                         Cancelar
                     </Dialog.Close>
-                    <Button type="submit">{iSeleccionado === null ? "Registrar" : "Guardar cambios"}</Button>
+                    <Button type="button" onclick={registrarUsuario}>
+                        {iSeleccionado === null ? "Registrar" : "Guardar cambios"}
+                    </Button>
                 </Dialog.Footer>
                 </form>
                 {/if}
@@ -179,7 +269,37 @@
                     <Dialog.Close type="button" class={buttonVariants({ variant: "outline" })}>
                         Cancelar
                     </Dialog.Close>
-                    <Button type="button" variant="destructive">Eliminar</Button>
+                    <Button type="button" variant="destructive" onclick={eliminarUsuario}>
+                        Eliminar
+                    </Button>
+                </Dialog.Footer>
+                {/if}
+            </Dialog.Content>
+    </Dialog.Root>
+{/snippet}
+{#snippet DialogResetUsuario()}    
+    <Dialog.Root bind:open={isDialogResetUsuarioAbierto}>
+    
+            <Dialog.Content class="sm:max-w-sm">
+                <Dialog.Header>
+                    <Dialog.Title>Reiniciar Clave</Dialog.Title>
+                </Dialog.Header>
+                {#if loadingType === "delete"}
+                    <div class="flex flex-col items-center justify-center gap-4">
+                        <Spinner class="size-8" />
+                        <p class="text-sm text-muted-foreground">Reiniciando contraseña...</p>
+                    </div>
+                {:else}
+                <div>
+                    Esta seguro de querer reiniciar la clave del usuario de {usuarios[iSeleccionado!]?.nombres} {usuarios[iSeleccionado!]?.apellidos} con cédula {usuarios[iSeleccionado!]?.cedula}? El usuario deberá crear su clave nuevamente al iniciar sesión.
+                </div>
+                <Dialog.Footer class="mt-4">
+                    <Dialog.Close type="button" class={buttonVariants({ variant: "outline" })}>
+                        Cancelar
+                    </Dialog.Close>
+                    <Button type="button" variant="destructive" onclick={reiniciarClave}>
+                        Reiniciar Contraseña
+                    </Button>
                 </Dialog.Footer>
                 {/if}
             </Dialog.Content>

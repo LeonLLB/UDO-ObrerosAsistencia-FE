@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { isAxiosError } from 'axios';
     import { axiosA } from '#lib/adapters/Axios.adapter.ts';
     import logo from '#lib/assets/logo_udo.png';
     import { Button } from '#lib/components/ui/button/index.ts';
@@ -12,6 +11,7 @@
     import EyeOffIcon from "@lucide/svelte/icons/eye-off";
     import EyeIcon from "@lucide/svelte/icons/eye";
     import { toast } from 'svelte-sonner';
+    import { getApiErrorMessage } from '#lib/helpers/client/getApiErrorMessage.ts';
 
         let form = $state({
         ci:'',
@@ -24,25 +24,7 @@
     let userStatus = $state<number | null>(null)
 
     let loadingText = $state('')
-
-    const getApiErrorMessage = (error: unknown): string => {
-        if (isAxiosError(error)) {
-            const data: unknown = error.response?.data;
-            if (data && typeof data === 'object' && 'message' in data) {
-                const message = data.message;
-                if (typeof message === 'string') return message;
-                if (Array.isArray(message) && message.every((item) => typeof item === 'string')) {
-                    return message.join('. ');
-                }
-            }
-
-            if (error.response) return `La API respondió con el error HTTP ${error.response.status}.`;
-            return 'No se pudo conectar con la API. Verifica la URL, la red y la configuración CORS.';
-        }
-
-        return error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
-    };
-
+    
     const findUserStatus = async () => {
 
         if(form.ci.length !== 8 && form.ci.length !== 7) return toast.info('Error en Cédula de Identidad',{
