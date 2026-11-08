@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { TipoUsuario } from './tipo-usuario';
 
 @Entity({ name: 'usuarios' })
@@ -27,7 +27,8 @@ export class EntidadUsuario {
     length: 255,
     select: false,
     nullable: true,
-    default: null,
+    default: null
   })
   claveHash!: string | null;
+
 }

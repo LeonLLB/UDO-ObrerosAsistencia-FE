@@ -1,6 +1,11 @@
 import 'reflect-metadata';
 import { CLAVE_BD, HOST_BD, NOMBRE_BD, PUERTO_BD, USUARIO_BD } from '$app/env/private';
 import { DataSource } from 'typeorm';
+import { EntidadArea } from './areas/entities/area.entity';
+import { EntidadMovimiento } from './a2d/entities/movement.entity';
+import { EntidadPersonal } from './personal/entities/personal.entity';
+import { VistaIntervalosAsistenciaDiaria } from './personal/entities/daily-attendance-interval.view';
+import { VistaResumenAsistenciaDiaria } from './personal/entities/daily-attendance-summary.view';
 import { EntidadUsuario } from './users/user.entity';
 
 let dataSource: DataSource | undefined;
@@ -26,7 +31,14 @@ function createDataSource(): DataSource {
 		username: requiredEnv('USUARIO_BD', USUARIO_BD),
 		password: requiredEnv('CLAVE_BD', CLAVE_BD),
 		database: requiredEnv('NOMBRE_BD', NOMBRE_BD),
-		entities: [EntidadUsuario],
+		entities: [
+			EntidadUsuario,
+			EntidadPersonal,
+			EntidadArea,
+			EntidadMovimiento,
+			VistaIntervalosAsistenciaDiaria,
+			VistaResumenAsistenciaDiaria,
+		],
 		synchronize: false
 	});
 }
