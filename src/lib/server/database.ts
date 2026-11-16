@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import { CLAVE_BD, HOST_BD, NOMBRE_BD, PUERTO_BD, USUARIO_BD } from '$app/env/private';
 import { DataSource } from 'typeorm';
 import { EntidadArea } from './areas/entities/area.entity';
+import { EntidadFeriado } from './attendance/entities/holiday.entity';
+import { EntidadPermiso } from './attendance/entities/permission.entity';
 import { EntidadMovimiento } from './a2d/entities/movement.entity';
 import { EntidadPersonal } from './personal/entities/personal.entity';
 import { VistaIntervalosAsistenciaDiaria } from './personal/entities/daily-attendance-interval.view';
@@ -35,6 +37,8 @@ function createDataSource(): DataSource {
 			EntidadUsuario,
 			EntidadPersonal,
 			EntidadArea,
+			EntidadFeriado,
+			EntidadPermiso,
 			EntidadMovimiento,
 			VistaIntervalosAsistenciaDiaria,
 			VistaResumenAsistenciaDiaria,

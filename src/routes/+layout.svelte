@@ -8,7 +8,7 @@
 	import * as Sidebar from '#lib/components/ui/sidebar/index.ts';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import type { Component } from 'svelte';
-	import {LogOutIcon, UsersIcon, ToolboxIcon, BuildingIcon, CalendarDaysIcon,HandCoinsIcon} from '@lucide/svelte/icons';
+	import {LogOutIcon, UsersIcon, ToolboxIcon, BuildingIcon, CalendarDaysIcon,HandCoinsIcon, SettingsIcon, DatabaseIcon} from '@lucide/svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import type { LayoutProps } from './$types';
 
@@ -26,19 +26,18 @@
 		children: NavigationChild[];
 	};
 
-	const navigationItems: NavigationItem[] = [
+	const baseNavigationItems: NavigationItem[] = [
 		{label: "Personal", icon: ToolboxIcon, children: [
 			{label: "Ver Personal", icon: UsersIcon, url: "/personal"},
 			{label: "Ver Dependencias", icon: BuildingIcon, url: "/personal/dependencies"},
-			{label: "Asistencia", icon: CalendarDaysIcon, url: "/personal/attendance"},
+			{label: "Asistencia Mensual", icon: CalendarDaysIcon, url: "/personal/attendance"},
+			{label: "Permisos", icon: CalendarDaysIcon, url: "/personal/permissions"},
 			{label: "Nomina", icon: HandCoinsIcon, url: "/personal/nomina"},
 		]},
 	];
 
-	let { children, data }: LayoutProps = $props();
-	
-	if(data.user?.tipo === "A"){
-		navigationItems.push({
+	const adminNavItems: NavigationItem[] = [
+		{
 			label: 'Usuarios',
 			icon: UsersIcon,
 			children: [
@@ -48,8 +47,31 @@
 					url: '/users'
 				}
 			]
-		});
-	}
+		},
+		{
+			label: 'Mantenimiento',
+			icon: SettingsIcon,
+			children: [
+				{
+					label: 'Respaldo de BD',
+					icon: DatabaseIcon,
+					url: '/backup'
+				},
+				{
+					label: 'Feriados',
+					icon: CalendarDaysIcon,
+					url: '/holidays'
+				},
+			]
+		},
+	]
+
+	let { children, data }: LayoutProps = $props();
+	const navigationItems = $derived(
+		data.user?.tipo === 'A'
+			? [...baseNavigationItems, ...adminNavItems]
+			: baseNavigationItems
+	);
 
 	async function logout() {
 		try {
@@ -70,21 +92,21 @@
 </script>
 
 <svelte:head>
-	<title>UDO NM - ADMIN ASISTENCIA DE PERSONAL</title>
+	<title>UDO NM - ADMIN DE PERSONAL</title>
 </svelte:head>
 
 {#if data.user}
 	<Sidebar.Provider class="flex-col">
 		<MobileSidebar items={navigationItems} user={data.user} onLogout={logout} />
 		<header class="sticky top-0 z-30 w-full bg-background/95 backdrop-blur">
-			<div class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 border-2 rounded-b-3xl px-4 shadow-md">
+			<div class="mx-auto flex h-16 w-full max-w-screen-2xl items-center justify-between gap-4 border-2 rounded-b-3xl px-4 shadow-md">
 				<div class="flex items-center gap-2">
-					<Sidebar.Trigger class="md:hidden" aria-label="Abrir navegación" />
-					<a href="/" class="shrink-0 font-semibold tracking-tight">UDO Asistencia</a>
+					<Sidebar.Trigger class="xl:hidden" aria-label="Abrir navegación" />
+					<a href="/" class="shrink-0 font-semibold tracking-tight">UDO Gestión de RRHH</a>
 				</div>
 
-				<nav class="hidden flex-1 justify-center md:flex" aria-label="Navegación principal">
-					<NavigationMenu.Root>
+				<nav class="hidden flex-1 justify-center xl:flex" aria-label="Navegación principal">
+					<NavigationMenu.Root viewport={false}>
 						<NavigationMenu.List class="flex items-center gap-1">
 							{#each navigationItems as item (item.label)}
 								<NavigationMenu.Item>
@@ -117,7 +139,7 @@
 					</NavigationMenu.Root>
 				</nav>
 
-				<div class="hidden items-center gap-3 md:flex">
+				<div class="hidden items-center gap-3 xl:flex">
 					<span class="text-sm text-muted-foreground">
 						{data.user.nombres} {data.user.apellidos}
 					</span>

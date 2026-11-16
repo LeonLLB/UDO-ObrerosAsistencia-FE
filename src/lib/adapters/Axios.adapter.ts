@@ -10,9 +10,14 @@ class AxiosAdapter {
 		});
 	}
 
-	async post<TD>(url: string, body: TD | null = null): Promise<AxiosResponse> {
+	async post<TD>(
+		url: string,
+		body: TD | null = null,
+		isBlob = false
+	): Promise<AxiosResponse> {
 		return Axios.post(this.apiUrl + url, body, {
-			withCredentials: true
+			withCredentials: true,
+			responseType: isBlob ? 'blob' : undefined
 		});
 	}
 
