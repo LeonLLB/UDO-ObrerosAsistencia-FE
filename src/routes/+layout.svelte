@@ -62,6 +62,16 @@
 					icon: CalendarDaysIcon,
 					url: '/holidays'
 				},
+				{
+					label: 'Configurar Tabla ONAPRE',
+					icon: HandCoinsIcon,
+					url: '/config/onapre'
+				},
+				{
+					label: 'Configurar Conceptos Nomina',
+					icon: HandCoinsIcon,
+					url: '/config/conceptos'
+				},
 			]
 		},
 	]

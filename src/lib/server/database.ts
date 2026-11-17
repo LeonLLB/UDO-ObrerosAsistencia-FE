@@ -6,6 +6,7 @@ import { EntidadFeriado } from './attendance/entities/holiday.entity';
 import { EntidadPermiso } from './attendance/entities/permission.entity';
 import { EntidadMovimiento } from './a2d/entities/movement.entity';
 import { EntidadPersonal } from './personal/entities/personal.entity';
+import { EntidadOnapre } from './personal/entities/onapre.entity';
 import { VistaIntervalosAsistenciaDiaria } from './personal/entities/daily-attendance-interval.view';
 import { VistaResumenAsistenciaDiaria } from './personal/entities/daily-attendance-summary.view';
 import { EntidadUsuario } from './users/user.entity';
@@ -36,6 +37,7 @@ function createDataSource(): DataSource {
 		entities: [
 			EntidadUsuario,
 			EntidadPersonal,
+			EntidadOnapre,
 			EntidadArea,
 			EntidadFeriado,
 			EntidadPermiso,
