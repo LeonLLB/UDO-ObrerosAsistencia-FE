@@ -1,28 +1,16 @@
 <script lang="ts">
     import Button, { buttonVariants } from '#lib/components/ui/button/button.svelte';
+    import * as Card from '#lib/components/ui/card/index.ts';
     import * as Dialog from "#lib/components/ui/dialog/index.js";
-    import * as Select from "#lib/components/ui/select/index.js";
     import * as Field from "#lib/components/ui/field/index.js";
     import { Input } from "#lib/components/ui/input/index.js";
 	import { Label } from "#lib/components/ui/label/index.js";
-    import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-    import * as Popover from '#lib/components/ui/popover/index.ts';
     import * as Table from '#lib/components/ui/table/index.ts';
-    import {UserRoundPlusIcon, EllipsisIcon, PencilIcon, TrashIcon, RotateCcwIcon, CalendarIcon} from '@lucide/svelte/icons';    
+    import {PlusIcon, PencilIcon, TrashIcon} from '@lucide/svelte/icons';
     import { Spinner } from '#lib/components/ui/spinner/index.js';
     import { toast } from 'svelte-sonner';
     import { getApiErrorMessage } from '#lib/helpers/client/getApiErrorMessage.ts';
     import { axiosA } from '#lib/adapters/Axios.adapter.js';
-    import { Separator } from '#lib/components/ui/separator/index.js';
-      import {
-        type DateValue,
-        DateFormatter,
-        getLocalTimeZone,
-          parseDate,
-          today,
-      } from "@internationalized/date";
-    import { cn } from 'cn';
-    import { Calendar } from '#lib/components/ui/calendar/index.js';
 
     const {data} = $props();
 
@@ -33,10 +21,6 @@
 
     let isDialogDependenciaAbierto = $state(false);
     let isDialogDelDependenciaAbierto = $state(false);
-    const df = new DateFormatter("es-VE", {
-        dateStyle: "long",
-    });
-
     let iSeleccionado = $state<number | null>(null);
     let formulario = $state<{
         nombre: string;
@@ -129,13 +113,23 @@
 
 
 
-<div class="w-full min-h-screen flex flex-col items-center mt-4 space-y-4">
-    <h1 class="text-2xl font-bold mb-4">Departamentos Registrados</h1>
-     
+<main class="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col gap-6 px-4 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <h1 class="text-2xl font-bold">Dependencias registradas</h1>
+        <Button type="button" onclick={abrirRegistro}>
+            <PlusIcon class="size-4"/> Registrar dependencia
+        </Button>
+    </div>
+
     {@render DialogDependencia()}
     {@render DialogDeleteDependencia()}
     
-    <div>
+    <Card.Root>
+    <Card.Content class="p-4 sm:p-6">
+    {#if dptos.length === 0}
+        <p class="py-8 text-center text-muted-foreground">No hay dependencias registradas.</p>
+    {:else}
+    <div class="overflow-x-auto">
         <Table.Root>
             <Table.Header>
                 <Table.Row>
@@ -148,34 +142,27 @@
                 <Table.Row>
                 <Table.Cell class="font-medium">{dpto.nombre}</Table.Cell>
                 <Table.Cell class="text-right">
-					<DropdownMenu.Root>
-						<DropdownMenu.Trigger>
-							{#snippet child({ props })}
-								<Button {...props} variant="ghost" size="icon" class="size-8">
-									<EllipsisIcon />
-									<span class="sr-only">Abrir menu</span>
-								</Button>
-							{/snippet}
-						</DropdownMenu.Trigger>
-						<DropdownMenu.Content align="end">
-							<DropdownMenu.Item onclick={() => abrirEdicion(dpto, index)}> <PencilIcon class="size-4" /> Editar</DropdownMenu.Item>
-							<DropdownMenu.Separator/>
-							<DropdownMenu.Item variant="destructive" onclick={() => abrirEliminacion(index)}> <TrashIcon class="size-4" /> Eliminar</DropdownMenu.Item>
-						</DropdownMenu.Content>
-					</DropdownMenu.Root>
+                    <div class="flex justify-end gap-2">
+                        <Button variant="outline" size="icon" aria-label="Editar dependencia" title="Editar dependencia" onclick={() => abrirEdicion(dpto, index)}>
+                            <PencilIcon class="size-4" />
+                        </Button>
+                        <Button variant="destructive" size="icon" aria-label="Eliminar dependencia" title="Eliminar dependencia" onclick={() => abrirEliminacion(index)}>
+                            <TrashIcon class="size-4" />
+                        </Button>
+                    </div>
 				</Table.Cell>
                 </Table.Row>
             {/each}
             </Table.Body>
         </Table.Root>
     </div>
-</div>
+    {/if}
+    </Card.Content>
+    </Card.Root>
+</main>
 
 
 {#snippet DialogDependencia()}
-    <Button type="button" onclick={abrirRegistro}>
-        <UserRoundPlusIcon class="size-4"/> Registrar Dependencia
-    </Button>
     <Dialog.Root bind:open={isDialogDependenciaAbierto}>
     
             <Dialog.Content class="sm:max-w-sm">
@@ -188,19 +175,19 @@
                         <p class="text-sm text-muted-foreground">Procesando...</p>
                     </div>
                 {:else}
-                <form onsubmit={(event) => event.preventDefault()}>
+                <form onsubmit={(event) => { event.preventDefault(); void registrarDepartamento(); }}>
                 
                 <Field.Group class="mt-4">                    
                     <Field.Field>
                         <Label for="nombre">Nombre</Label>
-                        <Input id="nombre" name="nombre" bind:value={formulario.nombre} />
+                        <Input id="nombre" name="nombre" bind:value={formulario.nombre} required maxlength={120} />
                     </Field.Field>                   
                 </Field.Group>
                 <Dialog.Footer class="mt-4">
                     <Dialog.Close type="button" class={buttonVariants({ variant: "outline" })}>
                         Cancelar
                     </Dialog.Close>
-                    <Button type="button" onclick={registrarDepartamento}>
+                    <Button type="submit">
                         {iSeleccionado === null ? "Registrar" : "Guardar cambios"}
                     </Button>
                 </Dialog.Footer>
@@ -239,5 +226,3 @@
             </Dialog.Content>
     </Dialog.Root>
 {/snippet}
-
-

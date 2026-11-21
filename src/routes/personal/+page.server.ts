@@ -22,16 +22,9 @@ export const load: PageServerLoad = async ({cookies,url}) => {
         return redirect(303, '/login');
     }
 
-    cookies.set(SESSION_COOKIE, session.token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: url.protocol === 'https:',
-        path: '/',
-        maxAge: 20 * 60
-    });
 
   const personal = await (await getDataSource()).getRepository(EntidadPersonal).find({
-        select: { id:true,apellidos: true, nombres: true, cedula: true, status: true,tipo:true, fechaIngreso:true, areaEncargada: { id:true, nombre:true } },
+        select: { id:true,apellidos: true, nombres: true, cedula: true, nCuenta: true, status: true,tipo:true, fechaIngreso:true, areaEncargada: { id:true, nombre:true } },
         relations:{areaEncargada:true}
     }).then((personal) => personal.map(trabajador=>({...trabajador,areaEncargada:{...trabajador.areaEncargada}})));
 

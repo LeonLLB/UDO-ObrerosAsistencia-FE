@@ -2,13 +2,16 @@
 	import { page } from '$app/state';
 	import { onDestroy } from 'svelte';
 	import { axiosA } from '#lib/adapters/Axios.adapter.ts';
+	import Button from '#lib/components/ui/button/button.svelte';
 	import * as Card from '#lib/components/ui/card/index.ts';
 	import * as Field from '#lib/components/ui/field/index.ts';
 	import { Label } from '#lib/components/ui/label/index.ts';
 	import * as Select from '#lib/components/ui/select/index.ts';
 	import * as Table from '#lib/components/ui/table/index.ts';
 	import { getApiErrorMessage } from '#lib/helpers/client/getApiErrorMessage.ts';
-	import { CalendarDays, ExternalLink, RotateCw } from '@lucide/svelte/icons';
+	import { downloadReport } from '#lib/helpers/client/downloadReport.ts';
+	import { Spinner } from '#lib/components/ui/spinner/index.ts';
+	import { CalendarDays, ExternalLink, FileTextIcon, RotateCw } from '@lucide/svelte/icons';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
 
@@ -76,6 +79,7 @@
 	let selectedType = $state('all');
 	let attendance = $state<MonthlyAttendance[]>([]);
 	let loading = $state(false);
+	let downloadingReport = $state(false);
 	let hasSearched = $state(false);
 	let periodError = $state('');
 	let requestVersion = 0;
@@ -173,12 +177,37 @@
 	onDestroy(() => {
 		requestVersion += 1;
 	});
+
+	async function downloadAttendanceReport() {
+		if (periodError || !hasSearched) {
+			toast.error('Selecciona un período válido para descargar el reporte.');
+			return;
+		}
+		const params = new URLSearchParams({ mes: selectedMonth, anio: selectedYear });
+		if (selectedDepartment !== 'all') params.set('idArea', selectedDepartment);
+		if (selectedType !== 'all') params.set('tipo', selectedType);
+		downloadingReport = true;
+		try {
+			await downloadReport(
+				`/asistencia/mensual/reporte?${params}`,
+				`asistencia-${selectedYear}-${selectedMonth.padStart(2, '0')}.pdf`
+			);
+		} catch (error) {
+			toast.error(getApiErrorMessage(error));
+		} finally {
+			downloadingReport = false;
+		}
+	}
 </script>
 
 
 <main class="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-screen-2xl flex-col gap-6 px-4 py-8">
-	<div>
+	<div class="flex flex-wrap items-center justify-between gap-4">
 		<h1 class="text-2xl font-bold">Asistencia mensual</h1>
+		<Button variant="outline" onclick={downloadAttendanceReport} disabled={downloadingReport || !!periodError || !hasSearched}>
+			{#if downloadingReport}<Spinner class="size-4" />{:else}<FileTextIcon class="size-4" />{/if}
+			Descargar reporte PDF
+		</Button>
 	</div>
 
 	<Card.Root>

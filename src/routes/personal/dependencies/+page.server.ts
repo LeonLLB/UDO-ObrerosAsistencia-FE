@@ -22,13 +22,6 @@ export const load: PageServerLoad = async ({cookies,url}) => {
         return redirect(303, '/login');
     }
 
-    cookies.set(SESSION_COOKIE, session.token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: url.protocol === 'https:',
-        path: '/',
-        maxAge: 20 * 60
-    });
 
     if(session.user.tipo !== "A") {
         return redirect(303, '/');    }

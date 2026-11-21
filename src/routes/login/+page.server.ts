@@ -14,13 +14,6 @@ export const load: PageServerLoad = async ({cookies,url}) => {
 
     const session = await UsersMiddlewares.checkIfUserLoggedIn(token);
     if (session) {
-        cookies.set(SESSION_COOKIE, session.token, {
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: url.protocol === 'https:',
-            path: '/',
-            maxAge: 20 * 60
-        });
         return redirect(303, '/');
     }
 

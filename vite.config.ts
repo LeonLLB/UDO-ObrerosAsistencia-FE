@@ -7,6 +7,18 @@ export default defineConfig({
 	ssr: {
 		noExternal: ['bits-ui']
 	},
+		server: {
+		host: true,
+		port: 5173,
+		allowedHosts: true,
+		proxy: {
+			'/api': {
+			target: 'http://127.0.0.1:8090',
+			changeOrigin: true,
+			rewrite: (path) => path.replace(/^\/api/, '')
+			}
+		}
+		},
 	plugins: [
 		tailwindcss(),
 		sveltekit({

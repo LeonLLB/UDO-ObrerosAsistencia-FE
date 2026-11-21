@@ -17,6 +17,9 @@ export class EntidadPersonal {
 	@Column({ type: 'varchar', length: 20, unique: true })
 	cedula!: string;
 
+	@Column({ name: 'n_cuenta', type: 'varchar', length: 20, unique: true, nullable: true })
+	nCuenta!: string | null;
+
 	@Column({ type: 'varchar', length: 100 })
 	nombres!: string;
 
